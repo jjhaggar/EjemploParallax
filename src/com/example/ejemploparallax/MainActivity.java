@@ -100,11 +100,7 @@ public class MainActivity extends SimpleBaseGameActivity {
 		final VertexBufferObjectManager vertexBufferObjectManager = this.getVertexBufferObjectManager();
 		final Scene scene = new Scene();
 		
-		// Añadimos el fondo parallax automático (este se moverá sólo, aunque lo ideal es que se mueva cuando yo se lo diga)
-		final AutoParallaxBackground autoParallaxBackground = new AutoParallaxBackground(0, 0, 0, 5);
-		scene.setBackground(autoParallaxBackground);
-		
-		
+	
 		// Creamos los sprites de las entidades parallax y las añadimos al fondo parallax
 		parallaxLayerBackSprite = new Sprite(0, 0, this.mParallaxLayerBackTextureRegion, vertexBufferObjectManager);
 		parallaxLayerBackSprite.setOffsetCenter(0, 0);
@@ -115,10 +111,31 @@ public class MainActivity extends SimpleBaseGameActivity {
 		parallaxLayerFrontSprite = new Sprite(0, 0, this.mParallaxLayerFrontTextureRegion, vertexBufferObjectManager);
 		parallaxLayerFrontSprite.setOffsetCenter(0, 0);
 		
-		autoParallaxBackground.attachParallaxEntity(new ParallaxEntity(-5.0f, parallaxLayerBackSprite));
-		autoParallaxBackground.attachParallaxEntity(new ParallaxEntity(-10.0f, parallaxLayerMidSprite));
-		autoParallaxBackground.attachParallaxEntity(new ParallaxEntity(-120.0f, parallaxLayerFrontSprite));
 		
+		// Ahora añadiremos la capa parallax (ParallaxLayer) y la añadiremos a la scene
+		
+		// En el paquete "org.andengine.entity.scene.background" de "AndEngine" sólo están las clases:
+		// AutoParallaxBackground.java
+		// Background.java
+		// EntityBackground.java
+		// IBackground.java
+		// ParallaxBackground.java <----- Interesante, pero insuficiente (sólo funciona en horizontal)
+		// RepeatingSpriteBackground.java
+		// SpriteBackground.java
+		
+		// En el paquete "com.example.ejemploparallax.ParallaxLayer" están las clases que nos interesan 
+		final ParallaxLayer parallaxLayer = new ParallaxLayer(mCamera, true);
+		parallaxLayer.setParallaxChangePerSecond(10);
+		parallaxLayer.setParallaxScrollFactor(1);
+		// ¡Cuidado con la siguiente línea! ¡NO USAR ESTO!-->"org.andengine.entity.scene.background.ParallaxBackground.ParallaxEntity"
+		ParallaxLayer.ParallaxEntity parEnt1 = new ParallaxLayer.ParallaxEntity(-5, parallaxLayerBackSprite, false);
+		parallaxLayer.attachParallaxEntity(parEnt1);
+		parallaxLayer.attachParallaxEntity(new ParallaxLayer.ParallaxEntity(-10, parallaxLayerMidSprite, false));
+		parallaxLayer.attachParallaxEntity(new ParallaxLayer.ParallaxEntity(-120, parallaxLayerFrontSprite, false));
+		
+	    scene.attachChild(parallaxLayer);
+	    
+	    
 		
 		// Creamos el sprite de un personaje y lo añadimos a la scene
 		
