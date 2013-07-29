@@ -3,15 +3,14 @@ package com.example.ejemploparallax;
 
 import java.io.IOException;
 
-
 import org.andengine.engine.camera.Camera;
+import org.andengine.engine.handler.timer.ITimerCallback;
+import org.andengine.engine.handler.timer.TimerHandler;
 import org.andengine.engine.options.EngineOptions;
 import org.andengine.engine.options.ScreenOrientation;
 import org.andengine.engine.options.WakeLockOptions;
 import org.andengine.engine.options.resolutionpolicy.FillResolutionPolicy;
 import org.andengine.entity.scene.Scene;
-import org.andengine.entity.scene.background.AutoParallaxBackground;
-import org.andengine.entity.scene.background.ParallaxBackground.ParallaxEntity;
 import org.andengine.entity.sprite.AnimatedSprite;
 import org.andengine.entity.sprite.Sprite;
 import org.andengine.entity.util.FPSLogger;
@@ -24,9 +23,9 @@ import org.andengine.opengl.texture.region.TiledTextureRegion;
 import org.andengine.opengl.vbo.VertexBufferObjectManager;
 import org.andengine.ui.activity.SimpleBaseGameActivity;
 
-
-import android.view.KeyEvent;
 import tv.ouya.console.api.OuyaController;
+import android.util.Log;
+import android.view.KeyEvent;
 
 
 public class MainActivity extends SimpleBaseGameActivity {
@@ -58,8 +57,12 @@ public class MainActivity extends SimpleBaseGameActivity {
 	private TiledTextureRegion mPersonajeTextureRegion;
 	private AnimatedSprite personaje;
 	
+	private ParallaxBackground2d parallaxLayer; 
+	
+	private float desplazamientoParallaxVertical = 0;
+	private float desplazamientoParallaxHorizontal = 0;
+	
 	private Camera mCamera;
-
 
 	@Override
 	public EngineOptions onCreateEngineOptions() {
@@ -111,31 +114,30 @@ public class MainActivity extends SimpleBaseGameActivity {
 		parallaxLayerFrontSprite = new Sprite(0, 0, this.mParallaxLayerFrontTextureRegion, vertexBufferObjectManager);
 		parallaxLayerFrontSprite.setOffsetCenter(0, 0);
 		
+		//
+		// Método ParallaxBackground2d (extiende de Background, así que hay que añadirlo a la scene con "scene.setBackground(parallax)" 
+		//
 		
-		// Ahora añadiremos la capa parallax (ParallaxLayer) y la añadiremos a la scene
+		// El scroll automático funciona bien, se iniciaría con una de las siguientes líneas
+		parallaxLayer = new AutoHorizontalParallaxBackground(0, 0, 0, 10);
+		// parallaxLayer = new AutoVerticalParallaxBackground(0, 0, 0, 10);
+		// parallaxLayer = new AutoDiagonalParallaxBackground(0, 0, 0, 10);
 		
-		// En el paquete "org.andengine.entity.scene.background" de "AndEngine" sólo están las clases:
-		// AutoParallaxBackground.java
-		// Background.java
-		// EntityBackground.java
-		// IBackground.java
-		// ParallaxBackground.java <----- Interesante, pero insuficiente (sólo funciona en horizontal)
-		// RepeatingSpriteBackground.java
-		// SpriteBackground.java
+		// El scroll no automático hay que hacerlo aumentando o disminuyendo el valor X o Y de parallax en el bucle de juego 
 		
-		// En el paquete "com.example.ejemploparallax.ParallaxLayer" están las clases que nos interesan 
-		final ParallaxLayer parallaxLayer = new ParallaxLayer(mCamera, true);
-		parallaxLayer.setParallaxChangePerSecond(10);
-		parallaxLayer.setParallaxScrollFactor(1);
-		// ¡Cuidado con la siguiente línea! ¡NO USAR ESTO!-->"org.andengine.entity.scene.background.ParallaxBackground.ParallaxEntity"
-		ParallaxLayer.ParallaxEntity parEnt1 = new ParallaxLayer.ParallaxEntity(-5, parallaxLayerBackSprite, false);
-		parallaxLayer.attachParallaxEntity(parEnt1);
-		parallaxLayer.attachParallaxEntity(new ParallaxLayer.ParallaxEntity(-10, parallaxLayerMidSprite, false));
-		parallaxLayer.attachParallaxEntity(new ParallaxLayer.ParallaxEntity(-120, parallaxLayerFrontSprite, false));
+		// parallaxLayer = new ParallaxBackground2d(0, 0, 0);
+		// parallaxLayer.offsetParallaxValue(0, 0); // aún no he comprobado esto
 		
-	    scene.attachChild(parallaxLayer);
-	    
-	    
+		// Inicializamos movimiento del fondo parallax a "pulsar derecha en pad" 
+		// moverScroll(OuyaController.BUTTON_DPAD_RIGHT);
+		
+		parallaxLayer.attachParallaxEntity(new ParallaxBackground2d.ParallaxBackground2dEntity(-5.0f,-1.2f, parallaxLayerBackSprite, true, false));
+		parallaxLayer.attachParallaxEntity(new ParallaxBackground2d.ParallaxBackground2dEntity(-10.0f,-2.0f, parallaxLayerMidSprite, true, false));
+		parallaxLayer.attachParallaxEntity(new ParallaxBackground2d.ParallaxBackground2dEntity(-30.0f,-3.0f, parallaxLayerFrontSprite, true, false));
+		
+		scene.setBackground(parallaxLayer); 
+		
+		
 		
 		// Creamos el sprite de un personaje y lo añadimos a la scene
 		
@@ -152,6 +154,19 @@ public class MainActivity extends SimpleBaseGameActivity {
 		
 		// personaje.setAlpha(0); // esconder el personaje 
 		
+		
+		// Bucle de actualización
+		float actualizacionesPorSegundo = 60.0f;
+		scene.registerUpdateHandler(new TimerHandler(1 / actualizacionesPorSegundo, true, new ITimerCallback() {
+			@Override
+			public void onTimePassed(final TimerHandler pTimerHandler) {
+				parallaxLayer.setParallaxValue(	parallaxLayer.mParallaxValueX + desplazamientoParallaxHorizontal, 
+												parallaxLayer.mParallaxValueY + desplazamientoParallaxVertical);
+			}
+		}));
+		
+		
+		
 		return scene;
 	}
 	
@@ -166,61 +181,83 @@ public class MainActivity extends SimpleBaseGameActivity {
 		personaje.setPosition(personaje.getX()+10, personaje.getY());
 	}
 	
-    @Override
-    public boolean onKeyDown(int keyCode, KeyEvent event) {
-        boolean handled = OuyaController.onKeyDown(keyCode, event);
-                
-        switch (keyCode) {
-		case OuyaController.BUTTON_O:
-			
-			break;
-
-		case OuyaController.BUTTON_U:
-			
-			break;
-
-		case OuyaController.BUTTON_Y:
-			
-			break;
-
-		case OuyaController.BUTTON_A:
-			
-			break;
-
-		case OuyaController.BUTTON_L1:
-			
-			break;
-		case OuyaController.BUTTON_L3:
-			
-			break;
-
-		case OuyaController.BUTTON_R1:
-			
-			break;
-		case OuyaController.BUTTON_R3:
-			
-			break;
+	public void moverScroll(int direccion){
+		//Log.v("direccion", ""+direccion);
+		switch (direccion) {
 		case OuyaController.BUTTON_DPAD_UP:
-			
+			desplazamientoParallaxVertical = 1;
 			break;
 		case OuyaController.BUTTON_DPAD_DOWN:
-			
+			desplazamientoParallaxVertical = -1;
 			break;
 		case OuyaController.BUTTON_DPAD_LEFT:
-			
+			desplazamientoParallaxHorizontal = -1;
 			break;
 		case OuyaController.BUTTON_DPAD_RIGHT:
-			moverPersonaje();
+			desplazamientoParallaxHorizontal = 1;
 			break;
-		
-		case OuyaController.BUTTON_MENU:
-			
-			break;
-		
 		default:
 			break;
 		}
-
+	}
+	
+	public void detenerScroll(int direccion){
+		switch (direccion) {
+		case OuyaController.BUTTON_DPAD_UP:
+			desplazamientoParallaxVertical = 0;
+			break;
+		case OuyaController.BUTTON_DPAD_DOWN:
+			desplazamientoParallaxVertical = 0;
+			break;
+		case OuyaController.BUTTON_DPAD_LEFT:
+			desplazamientoParallaxHorizontal = 0;
+			break;
+		case OuyaController.BUTTON_DPAD_RIGHT:
+			desplazamientoParallaxHorizontal = 0;
+			break;
+		default:
+			break;
+		}
+	}
+	
+    @Override
+    public boolean onKeyDown(int keyCode, KeyEvent event) {
+        boolean handled = OuyaController.onKeyDown(keyCode, event);
+        switch (keyCode) {
+		case OuyaController.BUTTON_O:
+			break;
+		case OuyaController.BUTTON_U:
+			break;
+		case OuyaController.BUTTON_Y:
+			break;
+		case OuyaController.BUTTON_A:
+			break;
+		case OuyaController.BUTTON_L1:
+			break;
+		case OuyaController.BUTTON_L3:
+			break;
+		case OuyaController.BUTTON_R1:
+			break;
+		case OuyaController.BUTTON_R3:
+			break;
+		case OuyaController.BUTTON_DPAD_UP:
+			moverScroll(keyCode);
+			break;
+		case OuyaController.BUTTON_DPAD_DOWN:
+			moverScroll(keyCode);
+			break;
+		case OuyaController.BUTTON_DPAD_LEFT:
+			moverScroll(keyCode);
+			break;
+		case OuyaController.BUTTON_DPAD_RIGHT:
+			// moverPersonaje();
+			moverScroll(keyCode);
+			break;
+		case OuyaController.BUTTON_MENU:
+			break;
+		default:
+			break;
+		}
         return handled || super.onKeyDown(keyCode, event);
     }
     
@@ -230,56 +267,38 @@ public class MainActivity extends SimpleBaseGameActivity {
         
         switch (keyCode) {
 		case OuyaController.BUTTON_O:
-			
 			break;
-
 		case OuyaController.BUTTON_U:
-			
 			break;
-
 		case OuyaController.BUTTON_Y:
-			
 			break;
-
 		case OuyaController.BUTTON_A:
-			
 			break;
-
 		case OuyaController.BUTTON_L1:
-			
 			break;
 		case OuyaController.BUTTON_L3:
-			
 			break;
-
 		case OuyaController.BUTTON_R1:
-			
 			break;
 		case OuyaController.BUTTON_R3:
-			
 			break;
-
 		case OuyaController.BUTTON_DPAD_UP:
-			
+			detenerScroll(keyCode);
 			break;
 		case OuyaController.BUTTON_DPAD_DOWN:
-			
+			detenerScroll(keyCode);
 			break;
 		case OuyaController.BUTTON_DPAD_LEFT:
-			
+			detenerScroll(keyCode);
 			break;
 		case OuyaController.BUTTON_DPAD_RIGHT:
-			
+			detenerScroll(keyCode);
 			break;
-			
 		case OuyaController.BUTTON_MENU:
-			
 			break;
-			
 		default:
 			break;
 		}
-        
         return handled || super.onKeyUp(keyCode, event);
     }
 

@@ -4,7 +4,7 @@
 // Problemas encontrados al copiar la clase:
 // 1) Tras copiar el contenido de la clase, he sustituido los "IAreaShape" por "IShape", que deben haber sido renombrados en AndEngine
 // 2) Aparecen dos métodos obsoletos en varias ocasiones: .getWidthScaled() y .getHeightScaled()
-// 3) Aparecen trs líneas con el mensaje de error -> Suspicious method call; should probably call "draw" rather than "onDraw"
+// 3) Aparecen tres líneas con el mensaje de error -> Suspicious method call; should probably call "draw" rather than "onDraw"
 //    Lo soluciono añadiendo @SuppressLint("WrongCall") al principio de ParallaxLayer
 // 4) Hay un par de advertencias avisando que mParallaxOnAxisX debería usarse de forma estática
 
