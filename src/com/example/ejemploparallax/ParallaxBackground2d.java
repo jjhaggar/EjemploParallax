@@ -133,8 +133,8 @@ public class ParallaxBackground2d extends Background {
 
 		final float mParallaxFactorX;
 		final float mParallaxFactorY;
-		final Boolean mRepeatX;
-		final Boolean mRepeatY;		
+		private Boolean mRepeatX; //final Boolean mRepeatX; // chapucillas JJ
+		private Boolean mRepeatY; //final Boolean mRepeatY; // chapucillas JJ		
 		final IShape mShape;
 		final Boolean mShouldCull;
 
@@ -174,9 +174,18 @@ public class ParallaxBackground2d extends Background {
 
 		
 		// ===========================================================
-		// Getter & Setter
+		// Getters & Setters
 		// ===========================================================
+		
+		// Chapucillas para conocer y cambiar la repetición o no repetición de la textura al vuelo 
+		public Boolean getmRepeatX() { return mRepeatX; }
+		public void setmRepeatX(Boolean mRepeatX) { this.mRepeatX = mRepeatX; }
+		public Boolean tooglemRepeatX() { this.mRepeatX = !this.mRepeatX; return this.mRepeatX; }
 
+		public Boolean getmRepeatY() { return mRepeatY; }
+		public void setmRepeatY(Boolean mRepeatY) { this.mRepeatY = mRepeatY; }
+		public Boolean tooglemRepeatY() { this.mRepeatY = !this.mRepeatY; return this.mRepeatY; }
+		
 		// ===========================================================
 		// Methods for/from SuperClass/Interfaces
 		// ===========================================================
